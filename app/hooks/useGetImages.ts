@@ -10,7 +10,7 @@ type ImageData = {
     url:string;
 }
 
-const imageCache = new AppCache<ImageData>()
+const imageCache = new AppCache<ImageList>()
 
 export const useGetImages = (defaultValue?:ImageList|null|undefined) => {
     const [loading, setLoading] = useState<Record<number, boolean>>({});
@@ -23,7 +23,8 @@ export const useGetImages = (defaultValue?:ImageList|null|undefined) => {
     });
 
     const tempDataRef = useRef({
-        currentPage:1
+        currentPage:1,
+        hasReachedEnd:false
     })
 
     const pageLimit = 30;
@@ -51,7 +52,7 @@ export const useGetImages = (defaultValue?:ImageList|null|undefined) => {
     }
 
     const imageFetcher = (page:number) => {
-        return fetch(`${IMAGE_LIST_URL}?page=${page}`).then(resp => resp.json())
+        return fetch(`${IMAGE_LIST_URL}?page=${page}`).then(resp => resp.json()) as Promise<ImageList>
     }
 
     const imageQuery = async (page:number) => {
@@ -65,13 +66,12 @@ export const useGetImages = (defaultValue?:ImageList|null|undefined) => {
 
     const fetchImages = (page:number) => {
         setLoadingStatus(page, true);
-        const cachedData = imageCache.getData(""+page)
-        if(cachedData){
-            return cachedData
-        }
         imageQuery(page).then(data => {
             imageCache.setData(""+page, data);
             setImageData(page, data);
+            if(data.length === 0){
+                tempDataRef.current.hasReachedEnd = true;
+            }
         }).catch(() => {
             setErrorStatus(page, true)
         })
@@ -81,6 +81,9 @@ export const useGetImages = (defaultValue?:ImageList|null|undefined) => {
     }
 
     const loadMoreImages = () => {
+        if(tempDataRef.current.hasReachedEnd){
+            return;
+        }
         const nextPage = tempDataRef.current.currentPage + 1;
         tempDataRef.current.currentPage = nextPage;
         fetchImages(nextPage)

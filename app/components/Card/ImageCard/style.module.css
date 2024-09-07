@@ -1,0 +1,26 @@
+
+.container {
+    display: flex;
+    /* padding: 10px; */
+    border: 1px lightgray solid;
+    position: relative;
+    isolation: isolate;
+    height: 500px;
+
+    & > img {
+        object-fit: cover;
+        max-width: 100%;
+    }
+}
+
+.fallback {
+    position: absolute;
+    inset:0;
+    z-index: 2;
+    & > img {
+        object-fit: cover;
+        max-width: 100%;
+        aspect-ratio: 1/1.4;
+    }
+}
+
